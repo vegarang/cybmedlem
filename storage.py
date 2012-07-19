@@ -1,7 +1,18 @@
+#/usr/local/bin/python
+#coding: utf-8
+
+from datetime import datetime as dt
+import os
+import json
 
 class Storage:
     """
-    A simple class used to save data, and eventually back up data to an online client.
+    A simple class used to save data, and back it up.
+
+    TODO: add sync to `google`_ and/or our `wiki`_.
+
+    .. _wiki: http://wiki.cyb.no
+    .. _google: http://drive.google.com
     """
     def __init__(self, **kwargs):
         """
@@ -9,28 +20,44 @@ class Storage:
         a list/dict `fields` where all values in `fields` will be required to create
         new objects and a single value `ident` used to fetch a specific object instead of an `id`.
 
+        if kwargs contains boolean 'uniqueident' and it is set to True, then 'ident' must be unique
+        on create.
+
         :param \*\*kwargs: dict containing valid fields for an object, and ident-field.
         """
         self.storage={}
+        self.uniqueident=False
+        self.objectname='Object'
         if 'fields' in kwargs:
             self.fields=kwargs['fields']
         if 'ident' in kwargs:
             self.ident=kwargs['ident']
+        if 'uniqueident' in kwargs:
+            self.uniqueident=kwargs['uniqueident']
+        if 'objectname' in kwargs:
+            self.objectname=kwargs['objectname']
+
 
     def create(self, **kwargs):
         """
         Adds an object to collection with values from `kwargs`. If `self.fields` is used, only
         values from `fields` will be used, and all values from `fields` are required.
 
-        All objects will automatically be given an `id` using :func:`storage.Storage._unique_id<_unique_id()>`.
+        All objects will automatically be given an `id` using :func:`_unique_id()<storage.Storage._unique_id>`.
 
         :param \*\*kwargs: dict with all fields for a new object.
         :returns: a dict with either 'success' containing the new object, or 'error' with errormessage.
         """
+        if self.uniqueident:
+            if 'success' in self.read(**{self.ident:kwargs[self.ident]}):
+                return {'error':'{} with {} {} already exists!'.format(self.objectname, self.ident, kwargs[self.ident])}
+
         args={}
         for f in self.fields:
             if not f in kwargs:
                 return {'error':'missing field {} in arguments!'.format(f)}
+            if kwargs[f]=='':
+                return {'error':'missing value for field: {}!'.format(f)}
             args[f]=kwargs[f]
 
         id=self._unique_id()
@@ -60,10 +87,10 @@ class Storage:
                         retval=v
                         match+=1
         if match>1:
-            return {'error':'multiple objects matching name'}
+            return {'error':'multiple {}s matching name'.format(self.objectname)}
         if match==1:
             return {'success':retval}
-        return {'error':'no objects found'}
+        return {'error':'no {}s found'.format(self.objectname)}
 
     def update(self, **kwargs):
         """
@@ -108,10 +135,10 @@ class Storage:
             return {'error':'No id provided'}
 
         if not kwargs['id'] in self.storage:
-            return {'error':'No object matching id'}
+            return {'error':'No {} matching id'.format(self.objectname)}
 
         del self.storage[kwargs['id']]
-        return {'success':'object with id {} is deleted'.format(kwargs['id'])}
+        return {'success':'{} with id {} is deleted'.format(self.objectname, kwargs['id'])}
 
 
     def search(self, **kwargs):
@@ -125,7 +152,7 @@ class Storage:
         for k, v in self.storage.iteritems():
             match=False
             for ak, av in kwargs.iteritems():
-                if not match and ak in self.fields:
+                if not match and ak in self.fields and not av=='':
                     value=v[ak]
                     if av in value:
                         retval[k]=v
@@ -140,7 +167,57 @@ class Storage:
 
         :returns: the first availible id.
         """
+        size=self.size()
+        if not size in self.storage:
+            return size
         i=0
         while i in self.storage:
             i+=1
         return i
+
+    def save(self):
+        """
+        Saves entire collection to file. Filename is provided by :func:`_get_filename<storage.Storage._get_filename>`
+
+        The collection is stored as JSON.
+        """
+        filename=self._get_filename()
+        f=open(filename, 'w')
+        js=json.dumps(self.storage, indent=3, sort_keys=True)
+        f.write(js)
+        f.close()
+
+    def load(self):
+        """
+        Load from file if file exists. Filename is provided by :func:`_get_filename<storage.Storage._get_filename>`
+
+        This function assumes that the collection is stored as JSON, created by :func:`save<storage.Storage.save>`.
+        """
+        filename=self._get_filename()
+        if not os.path.exists(filename):
+            return
+
+        f=open(filename, 'r')
+        js=f.read()
+        f.close()
+        self.storage=json.loads(js)
+
+    def _get_filename(self):
+        """
+        Calculates and returns current filename, e.g. 'medlemmer_h12' for autumn 2012.
+
+        :returns: current filename.
+        """
+        month=dt.now().strftime("%m")
+        year=dt.now().strftime("%y")
+        path=os.path.realpath('.')
+
+        if month<8:
+            return '{}/medlemslister/medlemmer_v{}.txt'.format(path, year)
+        return '{}/medlemslister/medlemmer_h{}.txt'.format(path, year)
+
+    def size(self):
+        """
+        returns the size of the collection
+        """
+        return len(self.storage)
