@@ -1,0 +1,233 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>storage &mdash; Cyb Medlemsliste 2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Cyb Medlemsliste 2.0 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../index.html">Cyb Medlemsliste 2.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for storage</h1><div class="highlight"><pre>
+<span class="k">class</span> <span class="nc">Storage</span><span class="p">:</span>
+<div class="viewcode-block" id="Storage"><a class="viewcode-back" href="../storage.html#storage.Storage">[docs]</a>    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple class used to save data, and eventually back up data to an online client.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor. Takes a python-dict `kwargs` as argument. kwargs must contain</span>
+<span class="sd">        a list/dict `fields` where all values in `fields` will be required to create</span>
+<span class="sd">        new objects and a single value `ident` used to fetch a specific object instead of an `id`.</span>
+
+<span class="sd">        :param \*\*kwargs: dict containing valid fields for an object, and ident-field.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="o">=</span><span class="p">{}</span>
+        <span class="k">if</span> <span class="s">&#39;fields&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;fields&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s">&#39;ident&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ident</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;ident&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="Storage.create"><a class="viewcode-back" href="../storage.html#storage.Storage.create">[docs]</a>        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds an object to collection with values from `kwargs`. If `self.fields` is used, only</span>
+<span class="sd">        values from `fields` will be used, and all values from `fields` are required.</span>
+
+<span class="sd">        All objects will automatically be given an `id` using :func:`storage.Storage._unique_id&lt;_unique_id()&gt;`.</span>
+
+<span class="sd">        :param \*\*kwargs: dict with all fields for a new object.</span>
+<span class="sd">        :returns: a dict with either &#39;success&#39; containing the new object, or &#39;error&#39; with errormessage.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">args</span><span class="o">=</span><span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;missing field {} in arguments!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">f</span><span class="p">)}</span>
+            <span class="n">args</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
+
+        <span class="nb">id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_unique_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span><span class="o">=</span><span class="n">args</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;success&#39;</span><span class="p">:</span><span class="nb">id</span><span class="p">,</span> <span class="s">&#39;object&#39;</span><span class="p">:</span><span class="n">args</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Storage.read"><a class="viewcode-back" href="../storage.html#storage.Storage.read">[docs]</a>        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find and return a spesific object from storage. Either based on `id` or `self.ident`</span>
+
+<span class="sd">        :param kwargs: dict containing either `id` or `self.ident`</span>
+<span class="sd">        :returns: a dict with either &#39;success&#39; containing the object, or &#39;error&#39; with errormessage.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;empty collection&#39;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="s">&#39;id&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{</span><span class="s">&#39;success&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">[</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]]}</span>
+
+        <span class="n">match</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ident</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ident</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ident</span><span class="p">]</span><span class="o">==</span><span class="n">kwargs</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ident</span><span class="p">]:</span>
+                        <span class="n">retval</span><span class="o">=</span><span class="n">v</span>
+                        <span class="n">match</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">match</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;multiple objects matching name&#39;</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">match</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;success&#39;</span><span class="p">:</span><span class="n">retval</span><span class="p">}</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;no objects found&#39;</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Storage.update"><a class="viewcode-back" href="../storage.html#storage.Storage.update">[docs]</a>        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        find an element based on `id` and update with values in `kwargs`. Any values in kwargs that</span>
+<span class="sd">        are not in self.fields are ignored.</span>
+
+<span class="sd">        :param kwargs: dict containing `id` of object as well as updated fields.</span>
+<span class="sd">        :returns: a dict with either &#39;success&#39; containing the updated object, or &#39;error&#39; with errormessage.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;empty collection&#39;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;id&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;No id provided&#39;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;Provided id does not exist&#39;</span><span class="p">}</span>
+
+
+        <span class="nb">id</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
+        <span class="k">del</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
+        <span class="n">obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">[</span><span class="nb">id</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+                <span class="n">obj</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span><span class="n">v</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;success&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">[</span><span class="nb">id</span><span class="p">]}</span>
+
+
+    <span class="k">def</span> <span class="nf">delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Storage.delete"><a class="viewcode-back" href="../storage.html#storage.Storage.delete">[docs]</a>        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        finds and deletes an object based on `id`</span>
+
+<span class="sd">        :param kwargs: dict containing id of object.</span>
+<span class="sd">        :returns: a dict with either &#39;success&#39; containing the deleted `id`, or &#39;error&#39; with errormessage.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;empty collection&#39;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="s">&#39;id&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;No id provided&#39;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span><span class="s">&#39;No object matching id&#39;</span><span class="p">}</span>
+
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">[</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s">&#39;success&#39;</span><span class="p">:</span><span class="s">&#39;object with id {} is deleted&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">])}</span>
+
+
+    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span></div>
+<div class="viewcode-block" id="Storage.search"><a class="viewcode-back" href="../storage.html#storage.Storage.search">[docs]</a>        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        search for any object that contains any values from `kwargs`.</span>
+
+<span class="sd">        :param kwargs: dict containing search-fields. any field not in self.fields are ignored.</span>
+<span class="sd">        :retval: returns a dictionary containing all objects that match search-fields.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">retval</span><span class="o">=</span><span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="n">match</span><span class="o">=</span><span class="bp">False</span>
+            <span class="k">for</span> <span class="n">ak</span><span class="p">,</span> <span class="n">av</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span> <span class="ow">and</span> <span class="n">ak</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">v</span><span class="p">[</span><span class="n">ak</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">av</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                        <span class="n">retval</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span><span class="n">v</span>
+                        <span class="n">match</span><span class="o">=</span><span class="bp">True</span>
+
+        <span class="k">return</span> <span class="n">retval</span>
+
+
+    <span class="k">def</span> <span class="nf">_unique_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span></div>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finds the first availible id and returns it.</span>
+
+<span class="sd">        :returns: the first availible id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage</span><span class="p">:</span>
+            <span class="n">i</span><span class="o">+=</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="n">i</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../index.html">Cyb Medlemsliste 2.0 documentation</a> &raquo;</li>
+          <li><a href="index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2012, Vegard Angell.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>
