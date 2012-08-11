@@ -1,5 +1,5 @@
 #/usr/local/bin/python
-#coding: utf-8
+# -*- coding: utf-8 -*-
 
 from datetime import datetime as dt
 import os
@@ -48,6 +48,14 @@ class Storage:
         :param \*\*kwargs: dict with all fields for a new object.
         :returns: a dict with either 'success' containing the new object, or 'error' with errormessage.
         """
+        if 'name' in kwargs:
+            name=kwargs['name'].strip()
+            if len(name.split())<2:
+                return {'error':'You have to enter a full name!'}
+
+            if len(name)<5:
+                return {'error':'A name has to be more than 5 letters'}
+
         if self.uniqueident:
             if 'success' in self.read(**{self.ident:kwargs[self.ident]}):
                 return {'error':'{} with {} {} already exists!'.format(self.objectname, self.ident, kwargs[self.ident])}
@@ -58,12 +66,11 @@ class Storage:
                 return {'error':'missing field {} in arguments!'.format(f)}
             if kwargs[f]=='':
                 return {'error':'missing value for field: {}!'.format(f)}
-            args[f]=kwargs[f]
+            args[f]=unicode(kwargs[f])
 
-        id=self._unique_id()
-        self.storage[id]=args
-
-        return {'success':id, 'object':args}
+        key=self._unique_id()
+        self.storage[key]=args
+        return {'success':key, 'object':args}
 
     def read(self, **kwargs):
         """
@@ -128,6 +135,7 @@ class Storage:
         :param kwargs: dict containing id of object.
         :returns: a dict with either 'success' containing the deleted `id`, or 'error' with errormessage.
         """
+
         if len(self.storage)==0:
             return {'error':'empty collection'}
 
@@ -135,7 +143,7 @@ class Storage:
             return {'error':'No id provided'}
 
         if not kwargs['id'] in self.storage:
-            return {'error':'No {} matching id'.format(self.objectname)}
+            return {'error':'No {} matching id: {}'.format(self.objectname, kwargs['id'])}
 
         del self.storage[kwargs['id']]
         return {'success':'{} with id {} is deleted'.format(self.objectname, kwargs['id'])}
@@ -200,7 +208,11 @@ class Storage:
         f=open(filename, 'r')
         js=f.read()
         f.close()
-        self.storage=json.loads(js)
+        #bugfix for keys..
+        tmp=json.loads(js)
+        for k, v in tmp.iteritems():
+            self.storage[int(k)]=v
+        #self.storage=json.loads(js)
 
     def _get_filename(self):
         """

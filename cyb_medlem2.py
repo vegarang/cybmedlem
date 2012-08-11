@@ -1,12 +1,11 @@
 #/usr/local/bin/python
-#coding: utf-8
+# -*- coding: utf-8 -*-
 
 from storage import Storage
 from Tkinter import *
 from datetime import datetime as dt
 import tkFont
 from scrolledlist import ScrolledList as SL
-
 
 class Main(Frame):
     """
@@ -164,11 +163,13 @@ class Main(Frame):
 
         called when user clicks delete or when user presses enter while cursor is in the delete-field.
         """
-        id=self.delete_id.get().lower()
+        id=int(self.delete_id.get().lower())
+        self.delete_id.delete(0, END)
 
         obj=self.storage.delete(**{'id':id})
         if 'success' in obj:
             self.infotext.set('Success! {}'.format(obj['success']))
+            self._populate_list()
         else:
             self.infotext.set('FAILURE! {}'.format(obj['error']))
         self._update_count()
@@ -181,7 +182,7 @@ class Main(Frame):
         :param name: name of a person.
         :param date: date of a person.
         """
-        self.memlist.append(' {:4} - {:25} - {} '.format(id, name, date))
+        self.memlist.append(u' {:<4} - {:25} - {} '.format(id, name, date))
 
     def _populate_list(self):
         """
