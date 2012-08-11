@@ -213,8 +213,8 @@ class Storage:
         path=os.path.realpath('.')
 
         if month<8:
-            return '{}/medlemslister/medlemmer_v{}.txt'.format(path, year)
-        return '{}/medlemslister/medlemmer_h{}.txt'.format(path, year)
+            return '{}/medlemslister/medlemmer_v{}.json'.format(path, year)
+        return '{}/medlemslister/medlemmer_h{}.json'.format(path, year)
 
     def size(self):
         """
