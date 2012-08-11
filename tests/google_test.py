@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import gdata.docs
 import gdata.docs.service
 import gdata.spreadsheet.service
 import re, os
@@ -10,6 +9,7 @@ class Google_Connect:
         self.gd_client.email='cyb.medlemssystem'
         self.gd_client.password='Cybernetisk1969'
         self.gd_client.ProgrammaticLogin()
+        print self.gd_client
 
         q=gdata.spreadsheet.DocumentQuery()
         q['title']='Test'

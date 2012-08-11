@@ -11,22 +11,22 @@ class TestStorage(unittest.TestCase):
              }
         self.s=Storage(**args)
 
-        self.spiderman={'name':'spiderman',
+        self.spiderman={'name':'spider man',
               'date':datetime.now(),
              }
         self.s.create(**self.spiderman)
 
-        self.superman={'name':'superman',
+        self.superman={'name':'super man',
               'date':datetime.now(),
              }
         self.s.create(**self.superman)
 
-        self.batman={'name':'batman',
+        self.batman={'name':'bat man',
               'date':datetime.now(),
              }
         self.s.create(**self.batman)
 
-        self.superdude={'name':'superdude',
+        self.superdude={'name':'super dude',
               'date':datetime.now(),
              }
         self.s.create(**self.superdude)
@@ -38,11 +38,11 @@ class TestStorage(unittest.TestCase):
         self.assertEqual(obj['name'], self.spiderman['name'])
 
     def test_update(self):
-        retval=self.s.update(**{'id':1, 'name':'superwoman'})
+        retval=self.s.update(**{'id':1, 'name':'super woman'})
         self.assertTrue('success' in retval)
 
         obj=self.s.read(**{'id':1})
-        self.assertEqual(obj['success']['name'], 'superwoman')
+        self.assertEqual(obj['success']['name'], 'super woman')
 
     def test_delete(self):
         retval=self.s.delete(**{'id':2})
