@@ -22,6 +22,8 @@ class Main(Frame):
              }
         self.storage=Storage(**args)
         self.storage.load()
+        self.is_clicked=False
+        self.clicked_id=-1
         Frame.__init__(self, master)
         self.master.title('Medlemsregister Cybernetisk Selskab')
         self.grid(padx=25, pady=30)
@@ -54,7 +56,7 @@ class Main(Frame):
         self.nametxt.configure(font=monospace)
 
         #List of members
-        self.memlist=SL(self, height=15, width=55)
+        self.memlist=SL(self, height=15, width=55, callback=self._click_list)
         self.memlist.grid(row=7, column=0, columnspan=7)
         self.memlist.listbox.configure(font=monospace)
 
@@ -63,7 +65,7 @@ class Main(Frame):
         self.search_lbl=Label(self, textvariable=self.searchtext)
         self.search_lbl.pack()
         self.search_lbl.grid(row=9, column=0, columnspan=10)
-        self.searchtext.set("Enter values in one of the fields below and press search to search for people.")
+        self.searchtext.set("  \nEnter values in one of the fields below,\nthen press search to search for people.")
 
         #Search-fields
         self.search_name_label=Label(self, text='Name:')
@@ -73,7 +75,7 @@ class Main(Frame):
         self.search_name.bind('<Return>', self.search)
         self.search_name.configure(font=monospace)
 
-        self.search_date_label=Label(self, text='Date(Y-m-d):')
+        self.search_date_label=Label(self, text='Date/Time:')
         self.search_date_label.grid(row=11, column=0)
         self.search_date=Entry(self)
         self.search_date.grid(row=11, column=1, columnspan=4)
@@ -91,7 +93,7 @@ class Main(Frame):
         self.delete_lbl=Label(self, textvariable=self.delete_text)
         self.delete_lbl.pack()
         self.delete_lbl.grid(row=12, column=0, columnspan=10)
-        self.delete_text.set("Enter an id in the field below and press delete to delete a person.")
+        self.delete_text.set("  \nClick a person in the list, or enter an id in the field below,\n then press delete to delete a person.")
 
         #Delete-fields
         self.delete_id_label=Label(self, text='Id:')
@@ -163,8 +165,19 @@ class Main(Frame):
 
         called when user clicks delete or when user presses enter while cursor is in the delete-field.
         """
-        id=int(self.delete_id.get().lower())
+        val=self.delete_id.get()
         self.delete_id.delete(0, END)
+
+        if val=='':
+            if self.is_clicked:
+                id=self.clicked_id
+                self.is_clicked=False
+                self.clicked_id=-1
+            else:
+                self.infotext.set('FAILURE! No id provided. Either click a person in the list or write an id.')
+                return
+        else:
+            id=int(val)
 
         obj=self.storage.delete(**{'id':id})
         if 'success' in obj:
@@ -182,7 +195,7 @@ class Main(Frame):
         :param name: name of a person.
         :param date: date of a person.
         """
-        self.memlist.append(u' {:<4} - {:25} - {} '.format(id, name, date))
+        self.memlist.append(u' {:<4} - {:25} - {} '.format(id, name.title(), date))
 
     def _populate_list(self):
         """
@@ -199,6 +212,19 @@ class Main(Frame):
         Updates the counter in the ui with number from :func:`storage.size()<storage.Storage.size>`
         """
         self.count.set('Total:{}'.format(self.storage.size()))
+
+    def _click_list(self, linenum):
+        self._clear_all_textbox()
+        line=self.memlist[linenum]
+        vals=line.split('-')
+        self.clicked_id=int(vals[0].strip())
+        self.is_clicked=True
+
+    def _clear_all_textbox(self):
+        self.delete_id.delete(0, END)
+        self.search_name.delete(0, END)
+        self.search_date.delete(0, END)
+        self.nametxt.delete(0, END)
 
 if __name__=='__main__':
     gui=Main()
