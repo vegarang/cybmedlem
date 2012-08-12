@@ -15,7 +15,7 @@ class Main(Frame):
         """
         Main contstructor. Creates an instance of :class:`Storage<storage.Storage>` and starts the graphics-window.
         """
-        args={'fields':['name', 'date'],
+        args={'fields':['name', 'date', 'lifetime'],
               'ident':'name',
               'uniqueident':True,
               'objectname':'person'
@@ -30,11 +30,33 @@ class Main(Frame):
         self.create_elements()
         self._populate_list()
 
+    def hello(self):
+        print 'hello'
+
     def create_elements(self):
         """
         creates all graphics elements and places them in the graphics grid.
         """
         monospace=tkFont.Font(family='Courier', size=10, weight='normal')
+
+        #menubar:
+        menubar=Menu(self.master)
+
+        backupmenu=Menu(menubar, tearoff=0)
+        backupmenu.add_command(label='Backup to Google (Note: Slow!)', command=self.google_write)
+        backupmenu.add_command(label='Read backup from Google', command=self.google_read)
+        backupmenu.add_separator()
+        backupmenu.add_command(label='Backup to Wiki', command=self.wiki_write)
+        backupmenu.add_command(label='Read backup from Wiki', command=self.wiki_read)
+
+        specialmenu=Menu(menubar, tearoff=0)
+        specialmenu.add_command(label='Set as lifetime member', command=self.set_lifetime)
+        specialmenu.add_command(label='Remove lifetime membership', command=self.unset_lifetime)
+
+        menubar.add_cascade(label='Backup', menu=backupmenu)
+        menubar.add_cascade(label='Special Actions', menu=specialmenu)
+
+        self.master.config(menu=menubar)
 
         #Info-label
         self.infotext=StringVar()
@@ -56,7 +78,7 @@ class Main(Frame):
         self.nametxt.configure(font=monospace)
 
         #List of members
-        self.memlist=SL(self, height=15, width=55, callback=self._click_list)
+        self.memlist=SL(self, height=15, width=57, callback=self._click_list)
         self.memlist.grid(row=7, column=0, columnspan=7)
         self.memlist.listbox.configure(font=monospace)
 
@@ -128,7 +150,7 @@ class Main(Frame):
         self.nametxt.delete(0, END)
         date=dt.now().strftime("%Y-%m-%d %H:%M")
 
-        obj=self.storage.create(**{'name':name, 'date':date})
+        obj=self.storage.create(**{'name':name, 'date':date, 'lifetime':'n'})
         if not 'success' in obj:
             self.infotext.set('FAILURE! {}'.format(obj['error']))
         else:
@@ -187,7 +209,7 @@ class Main(Frame):
             self.infotext.set('FAILURE! {}'.format(obj['error']))
         self._update_count()
 
-    def _list_add(self, id, name, date):
+    def _list_add(self, id, name, date, lifetime='n'):
         """
         adds a person with id, name and timestamp to the list of users in the ui.
 
@@ -195,7 +217,10 @@ class Main(Frame):
         :param name: name of a person.
         :param date: date of a person.
         """
-        self.memlist.append(u' {:<4} - {:25} - {} '.format(id, name.title(), date))
+        life=''
+        if lifetime=='y':
+            life='- X'
+        self.memlist.append(u' {:<4} - {:25} - {} {}'.format(id, name.title(), date, life))
 
     def _populate_list(self):
         """
@@ -203,7 +228,7 @@ class Main(Frame):
         """
         self.memlist.clear()
         for k, v in self.storage.storage.iteritems():
-            self._list_add(k, v['name'], v['date'])
+            self._list_add(k, v['name'], v['date'], v['lifetime'])
 
         self._update_count()
 
@@ -225,6 +250,65 @@ class Main(Frame):
         self.search_name.delete(0, END)
         self.search_date.delete(0, END)
         self.nametxt.delete(0, END)
+
+    def google_write(self):
+        """
+        backup collection to a google spreadsheet
+        """
+        obj=self.storage.google_write()
+        if 'success' in obj:
+            self.infotext.set('Success! collection backed up to google spreadsheet.')
+        else:
+            self.infotext.set('Failure! {}'.format(obj['error']))
+
+    def google_read(self):
+        """
+        read backup of collection from a google spreadsheet
+        """
+        obj=self.storage.google_read()
+        if 'success' in obj:
+            self.infotext.set('Success! {}'.format(obj['success']))
+            self._populate_list()
+        else:
+            self.infotext.set('Failure! {}'.format(obj['error']))
+
+    def wiki_write(self):
+        """
+        backup collection to the cyb wiki
+        """
+        self.infotext.set('Please Wait...')
+        print 'wiki write'
+
+    def wiki_read(self):
+        """
+        read backup of collection from the cyb wiki
+        """
+        self.infotext.set('Please Wait...')
+        print 'wiki read'
+
+    def set_lifetime(self):
+        if not self.is_clicked:
+            self.infotext.set('FAILURE! No id provided. You have to click a person in the list!.')
+            return
+
+        id=self.clicked_id
+        self.is_clicked=False
+        self.clicked_id=-1
+
+        self.storage.update(**{'id':id, 'lifetime':'y'})
+        self._populate_list()
+
+    def unset_lifetime(self):
+        if not self.is_clicked:
+            self.infotext.set('FAILURE! No id provided. You have to click a person in the list!.')
+            return
+
+        id=self.clicked_id
+        self.is_clicked=False
+        self.clicked_id=-1
+
+        self.storage.update(**{'id':id, 'lifetime':'n'})
+        self._populate_list()
 
 if __name__=='__main__':
     gui=Main()

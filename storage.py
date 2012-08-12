@@ -4,6 +4,9 @@
 from datetime import datetime as dt
 import os
 import json
+import gspread
+from gspread.exceptions import SpreadsheetNotFound
+from account import username, passwd
 
 class Storage:
     """
@@ -36,6 +39,8 @@ class Storage:
             self.uniqueident=kwargs['uniqueident']
         if 'objectname' in kwargs:
             self.objectname=kwargs['objectname']
+
+        self.wks=None
 
 
     def create(self, **kwargs):
@@ -214,7 +219,7 @@ class Storage:
             self.storage[int(k)]=v
         #self.storage=json.loads(js)
 
-    def _get_filename(self):
+    def _get_filename(self, nameonly=False):
         """
         Calculates and returns current filename, e.g. 'medlemmer_h12' for autumn 2012.
 
@@ -224,8 +229,14 @@ class Storage:
         year=dt.now().strftime("%y")
         path=os.path.realpath('.')
 
+
         if month<8:
+            if nameonly:
+                return 'medlemmer_v{}'.format(year)
             return '{}/medlemslister/medlemmer_v{}.json'.format(path, year)
+
+        if nameonly:
+            return 'medlemmer_h{}'.format(year)
         return '{}/medlemslister/medlemmer_h{}.json'.format(path, year)
 
     def size(self):
@@ -233,3 +244,94 @@ class Storage:
         returns the size of the collection
         """
         return len(self.storage)
+
+    def google_write(self):
+        """
+        backup collection to a google spreadsheet.
+
+        Note: lazy backup, does not merge.. overwrites google-data.
+        """
+        if not self._get_google_sheet():
+            return {'error':'could not connect to google spreadsheet'}
+
+
+        try:
+            val=self.wks.col_values(1)
+        except ValueError:
+            val=[]
+
+        for i in xrange(1, len(val)+1):
+            self.wks.update_cell(i, 1, '')
+            self.wks.update_cell(i, 2, '')
+
+        x=1
+        for k, v in self.storage.iteritems():
+            self.wks.update_cell(x, 1, '{}'.format(k))
+            self.wks.update_cell(x, 2, json.dumps(v))
+            x+=1
+
+        return {'success':'backed up to google'}
+
+    def google_read(self):
+        """
+        read backup of collection from a google spreadsheet, merge values based on id and date.
+        """
+        if not self._get_google_sheet():
+            return {'error':'could not connect to google spreadsheet'}
+
+        empty=False
+        try:
+            keys=self.wks.col_values(1)
+            vals=self.wks.col_values(2)
+        except ValueError:
+            empty=True
+
+        if empty:
+            return {'error':'spreadsheet is empty!'}
+
+        gdoc={}
+        for i in xrange(0, len(keys)):
+            gdoc[keys[i]]=json.loads(vals[i])
+
+        for k, v in gdoc.iteritems():
+            if not k in self.storage:
+                self.storage[k]=v
+            else:
+                if v['date']>self.storage[k]['date']:
+                    self.storage[k]=v
+
+        return {'success':'read and merged all values from google doc.'}
+
+
+    def wiki_write(self):
+        """
+        backup collection to the cyb wiki
+        """
+        print 'wiki write'
+        pass
+
+    def wiki_read(self):
+        """
+        read backup of collection from the cyb wiki
+        """
+        print 'wiki read'
+        pass
+
+    def _get_google_sheet(self):
+        """
+        Connect to a google spreadsheet
+
+        :returns: True if success, False if not
+        """
+        if self.wks:
+            return True
+
+        name=self._get_filename(nameonly=True)
+        gc=gspread.login(username, passwd)
+        try:
+            wks=gc.open(name).sheet1
+        except SpreadsheetNotFound:
+            return False
+
+        self.wks=wks
+        return True

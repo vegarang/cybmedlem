@@ -1,7 +1,8 @@
 import gspread
+from account import username, passwd
 
-gc=gspread.login('cyb.medlemssystem', 'Cybernetisk1969')
+gc=gspread.login(username, passwd)
 
-wks=gc.open("Test").sheet1
+wks=gc.open("H2012").sheet1
 
-wks.update_acell('B2', "Does this work?")
+wks.update_acell('A1', "Does this work?")
