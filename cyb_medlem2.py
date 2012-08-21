@@ -78,7 +78,7 @@ class Main(Frame):
         self.nametxt.configure(font=monospace)
 
         #List of members
-        self.memlist=SL(self, height=15, width=57, callback=self._click_list)
+        self.memlist=SL(self, height=12, width=57, callback=self._click_list)
         self.memlist.grid(row=7, column=0, columnspan=7)
         self.memlist.listbox.configure(font=monospace)
 
