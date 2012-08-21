@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime as dt
-import os
-import json
-import gspread
+import os, sys, json, gspread
 from gspread.exceptions import SpreadsheetNotFound
 from account import username, passwd
 
@@ -237,6 +235,7 @@ class Storage:
         """
         filename=self._get_filename()
         if not os.path.exists(filename):
+            self._load_lifetime(filename)
             return
 
         f=open(filename, 'r')
@@ -250,6 +249,10 @@ class Storage:
             else:
                 self.storage[k]=v
 
+    def _load_lifetime(self, filename):
+        pass
+        #if 'v'
+        
     def _get_filename(self, nameonly=False):
         """
         Calculates and returns current filename, e.g. 'medlemmer_h12' for autumn 2012.
@@ -258,8 +261,7 @@ class Storage:
         """
         month=dt.now().strftime("%m")
         year=dt.now().strftime("%y")
-        path=os.path.realpath('.')
-
+        path=sys.argv[0].rsplit('/', 1)[0]
 
         if month<8:
             if nameonly:
