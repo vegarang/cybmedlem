@@ -1,0 +1,2 @@
+This is the folder where all lists of members will be stored. 
+Those lists are not added to the repo, since some members might not want their names on github :-)
