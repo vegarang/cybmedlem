@@ -1,4 +1,4 @@
-.py[co]
+*.py[co]
 
 # Packages
 *.egg
@@ -34,4 +34,6 @@ account.py
 *.swp
 *.swo
 
-docs/build/**
+medlemslister/*
+
+docs/build/*
