@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 from storage import Storage
-from Tkinter import *
+from Tkinter import Frame, Menu, Button, Entry, Label, StringVar, END
 from datetime import datetime as dt
-import tkFont
+import tkMessageBox, tkFont, os
 from scrolledlist import ScrolledList as SL
 
 class Main(Frame):
@@ -21,17 +21,28 @@ class Main(Frame):
               'objectname':'person'
              }
         self.storage=Storage(**args)
-        self.storage.load()
         self.is_clicked=False
         self.clicked_id=-1
         Frame.__init__(self, master)
         self.master.title('Medlemsregister Cybernetisk Selskab')
         self.grid(padx=25, pady=30)
-        self.create_elements()
-        self._populate_list()
 
-    def hello(self):
-        print 'hello'
+        if not self.storage._testfile():
+            path=os.path.abspath(__file__).rsplit('/',1)[0]
+            self._popup('ERROR!', 'Cannot write to file! make sure folder "{}/medlemslister" exists, then restart..'.format(path), 'error')
+            self.destroy()
+            self.master.destroy()
+            return
+
+        self.create_elements()
+
+        loadmsg=self.storage.load()
+        if 'error' in loadmsg:
+            self.infotext.set('ERROR! {}'.format(loadmsg['error']))
+        elif 'success' in loadmsg:
+            self.infotext.set('Success! {}'.format(loadmsg['success']))
+
+        self._populate_list()
 
     def create_elements(self):
         """
@@ -62,18 +73,18 @@ class Main(Frame):
         self.infotext=StringVar()
         self.info=Label(self, textvariable=self.infotext)
         self.info.pack()
-        self.info.grid(row=0, column=0, columnspan=9)
+        self.info.grid(row=0, column=0, columnspan=10)
         self.infotext.set("Welcome")
 
         #Save-button
-        self.savebtntext=Label(self, text='Enter name:')
-        self.savebtntext.grid(row=3, column=0)
+        #self.savebtntext=Label(self, text='Enter name:')
+        #self.savebtntext.grid(row=3, column=0)
         self.savebtn=Button(self, text='    Save    ', command=self.create, width=11)
         self.savebtn.grid(row=3, column=7)
 
-        #Name-field
-        self.omnibar=Entry(self)
-        self.omnibar.grid(row=3, column=1, columnspan=6)
+        #Omnibar (entry-field for add/search/delete)
+        self.omnibar=Entry(self, width=28)
+        self.omnibar.grid(row=3, column=0, columnspan=1)
         self.omnibar.bind('<Return>', self.create)
         self.omnibar.configure(font=monospace)
 
@@ -96,11 +107,15 @@ class Main(Frame):
         self.count=StringVar()
         self.countlbl=Label(self, textvariable=self.count)
         self.countlbl.pack()
-        self.countlbl.grid(row=8, column=0, columnspan=1)
+        self.countlbl.grid(row=8, column=0, sticky='W')
 
         #Reset list-button
         self.refreshbtn=Button(self, text='Refresh list', command=self._populate_list, width=11)
         self.refreshbtn.grid(row=8, column=9)
+
+        #Save to file-button
+        self.saveallbtn=Button(self, text='Save to file', command=self.storage.save, width=11)
+        self.saveallbtn.grid(row=8, column=8)
 
     def create(self, event=None):
         """
@@ -168,8 +183,18 @@ class Main(Frame):
             else:
                 self.infotext.set('FAILURE! No id provided. Either click a person in the list or write an id.')
                 return
+        elif 'L' in val:
+            id=val
         else:
             id=int(val)
+
+        obj=self.storage.read(**{'id':id})
+        if 'success' in obj:
+            check=self._popup('Really delete?',
+                              "Do you really want to delete '{}'?".format(obj['success']['name'].title()), 'warning')
+            if not check:
+                self.infotext.set('Delete aborted..')
+                return
 
         obj=self.storage.delete(**{'id':id})
         if 'success' in obj:
@@ -263,8 +288,20 @@ class Main(Frame):
         self.is_clicked=False
         self.clicked_id=-1
 
-        self.storage.update(**{'id':id, 'life':True})
-        self._populate_list()
+        obj=self.storage.read(**{'id':id})
+        if 'success' in obj:
+            check=self._popup('Set lifetime membership?',
+                              "Do you really want to give '{}' a lifetime membership?".format(obj['success']['name'].title()), 'warning')
+            if not check:
+                self.infotext.set('{} does NOT have a lifetime membership..'.format(obj['success']['name'].title()))
+                return
+
+        obj=self.storage.update(**{'id':id, 'life':True})
+        if 'error' in obj:
+            self.infotext.set('FAILURE! {}'.format(obj['error']))
+        elif 'success' in obj:
+            self.infotext.set('Success! {}'.format(obj['success']))
+            self._populate_list()
 
     def unset_lifetime(self):
         if not self.is_clicked:
@@ -275,15 +312,38 @@ class Main(Frame):
         self.is_clicked=False
         self.clicked_id=-1
 
-        self.storage.update(**{'id':id, 'life':False})
-        self._populate_list()
+        obj=self.storage.read(**{'id':id})
+        if 'success' in obj:
+            check=self._popup('Remove lifetime membership?',
+                              "Do you really want to remove '{}'s' lifetime membership?".format(obj['success']['name'].title()), 'warning')
+            if not check:
+                self.infotext.set('{} is still a lifetime member.'.format(obj['success']['name'].title()))
+                return
+
+        obj=self.storage.update(**{'id':id, 'life':False})
+        if 'error' in obj:
+            self.infotext.set('FAILURE! {}'.format(obj['error']))
+        elif 'success' in obj:
+            self.infotext.set('Success! {}'.format(obj['success']))
+            self._populate_list()
 
     def _get_val(self):
         val=self.omnibar.get()
         self.omnibar.delete(0, END)
         return val
 
+    def _popup(self, title, text, style=None):
+        if style:
+            if style=='error':
+                return tkMessageBox.showerror(title, text)
+            return tkMessageBox.askokcancel(title, text, icon=style)
+        return tkMessageBox.askokcancel(title, text)
+
 if __name__=='__main__':
     gui=Main()
     gui.mainloop()
-    gui.storage.save()
+    try:
+        gui.storage.save()
+    except IOError:
+        path=os.path.abspath(__file__).rsplit('/',1)[0]
+        print '\n\nFolder not found! Create folder "{}/medlemslister" and restart the program\n'.format(path)

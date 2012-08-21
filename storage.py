@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from datetime import datetime as dt
-import os, sys, json, gspread
+import os, sys, json, gspread, re
 from gspread.exceptions import SpreadsheetNotFound
 from account import username, passwd
 
@@ -39,6 +39,8 @@ class Storage:
             self.objectname=kwargs['objectname']
 
         self.wks=None
+
+        self.filename=self._get_filename()
 
 
     def create(self, **kwargs):
@@ -183,13 +185,13 @@ class Storage:
         Give the user a lifetime ID: Lx where x is number.
         """
         if self.storage[id]['lifetime']=='y':
-            return {'error':'{} with id {} is already set as lifetime member'.format(self.objectname, id)}
+            return {'error':'{} already has a lifetime membership'.format(self.storage[id]['name'].title())}
 
         lid=self._unique_id(True)
         self.storage[lid]=self.storage[id]
         self.storage[lid]['lifetime']='y'
         del self.storage[id]
-        return {'success':'{} with id {} now has id {} and is set as lifetime'.format(self.objectname, id, lid)}
+        return {'success':'{} now has id {} and a lifetime membership'.format(self.storage[lid]['name'].title(), lid)}
 
     def _unset_lifetime(self, lid):
         """
@@ -198,13 +200,13 @@ class Storage:
         Give the user a normal id, instead of lifetime id.
         """
         if self.storage[lid]['lifetime']=='n':
-            return {'error':'{} with id {} is not set as lifetime member'.format(self.objectname, lid)}
+            return {'error':'{} does not have a lifetime membership'.format(self.storage[id]['name'].title())}
 
         id=self._unique_id()
         self.storage[id]=self.storage[lid]
         self.storage[id]['lifetime']='n'
         del self.storage[lid]
-        return {'success':'{} with id {} now has id {} and is no longer set as lifetime'.format(self.objectname, lid, id)}
+        return {'success':'{} now has id {}, and have lost the lifetime membership'.format(self.storage[id]['name'].title(), id)}
 
     def _unique_id(self, life=False):
         """
@@ -225,14 +227,13 @@ class Storage:
             i+=1
         return i
 
-    def save(self):
+    def save(self, testfile=False):
         """
         Saves entire collection to file. Filename is provided by :func:`_get_filename<storage.Storage._get_filename>`
 
         The collection is stored as JSON.
         """
-        filename=self._get_filename()
-        f=open(filename, 'w')
+        f=open(self.filename, 'w')
         js=json.dumps(self.storage, indent=3, sort_keys=True)
         f.write(js)
         f.close()
@@ -243,14 +244,21 @@ class Storage:
 
         This function assumes that the collection is stored as JSON, created by :func:`save<storage.Storage.save>`.
         """
-        filename=self._get_filename()
-        if not os.path.exists(filename):
-            self._load_lifetime(filename)
-            return
+        js=''
+        if os.path.exists(self.filename):
+            f=open(self.filename, 'r')
+            js=f.read()
+            f.close()
 
-        f=open(filename, 'r')
-        js=f.read()
-        f.close()
+        if js=='' or js=='{}':
+            retval=self._load_lifetime()
+            if 'success' in retval:
+                retval['success']='No current file found. {}'.format(retval['success'])
+            elif 'error' in retval:
+                retval['error']='No current file found. {}'.format(retval['error'])
+
+            return retval
+
         #bugfix for keys..
         tmp=json.loads(js)
         for k, v in tmp.iteritems():
@@ -259,8 +267,16 @@ class Storage:
             else:
                 self.storage[k]=v
 
-    def _load_lifetime(self, filename):
-        m=re.search('(.+)medlemmer_(\S)(\d\d)\.json', filename)
+        return {'success':'Loaded all data from file'}
+
+    def _load_lifetime(self):
+        """
+        load lifetime-members from past periods. gets the filename for the current period and adds
+        all lifetime-members from the last period to storage.
+
+        :param filename: the filename of the current period.
+        """
+        m=re.search('(.+)medlemmer_(\S)(\d\d)\.json', self.filename)
         path=m.group(1)
         s=m.group(2)
         y=m.group(3)
@@ -271,12 +287,17 @@ class Storage:
         elif s=='v':
             old_fname='{}medlemmer_{}{}.json'.format(path, 'h', (y-1))
 
+        if not os.path.exists(old_fname):
+            return {'error':'Previous file could not be found, no lifetime members loaded.'}
+
         f=open(old_fname, 'r')
         old_storage=json.loads(f.read())
 
         for k, v in old_storage.iteritems():
-            if 'L' in k:
+            if 'L' in k and v['lifetime']=='y':
                 self.storage[k]=v
+
+        return {'success':'loaded all lifetime members from previous file'}
 
     def _get_filename(self, nameonly=False):
         """
@@ -286,7 +307,7 @@ class Storage:
         """
         month=dt.now().strftime("%m")
         year=dt.now().strftime("%y")
-        path=sys.argv[0].rsplit('/', 1)[0]
+        path=os.path.abspath(__file__).rsplit('/', 1)[0]
 
         if month<8:
             if nameonly:
@@ -303,6 +324,13 @@ class Storage:
         """
         return len(self.storage)
 
+    def _testfile(self):
+        try:
+            open(self.filename, 'w')
+        except(IOError):
+            return False
+        return True
+
     def google_write(self):
         """
         backup collection to a google spreadsheet.
@@ -311,7 +339,6 @@ class Storage:
         """
         if not self._get_google_sheet():
             return {'error':'could not connect to google spreadsheet'}
-
 
         try:
             val=self.wks.col_values(1)
@@ -365,14 +392,14 @@ class Storage:
         """
         backup collection to the cyb wiki
         """
-        print 'wiki write'
+        print 'TODO: wiki write'
         pass
 
     def wiki_read(self):
         """
         read backup of collection from the cyb wiki
         """
-        print 'wiki read'
+        print 'TODO: wiki read'
         pass
 
     def _get_google_sheet(self):
