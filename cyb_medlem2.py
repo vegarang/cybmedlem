@@ -62,78 +62,45 @@ class Main(Frame):
         self.infotext=StringVar()
         self.info=Label(self, textvariable=self.infotext)
         self.info.pack()
-        self.info.grid(row=0, column=0, columnspan=7)
+        self.info.grid(row=0, column=0, columnspan=9)
         self.infotext.set("Welcome")
 
         #Save-button
         self.savebtntext=Label(self, text='Enter name:')
         self.savebtntext.grid(row=3, column=0)
-        self.savebtn=Button(self, text='Save', command=self.create)
-        self.savebtn.grid(row=3, column=5)
+        self.savebtn=Button(self, text='    Save    ', command=self.create, width=11)
+        self.savebtn.grid(row=3, column=7)
 
         #Name-field
-        self.nametxt=Entry(self)
-        self.nametxt.grid(row=3, column=1, columnspan=4)
-        self.nametxt.bind('<Return>', self.create)
-        self.nametxt.configure(font=monospace)
+        self.omnibar=Entry(self)
+        self.omnibar.grid(row=3, column=1, columnspan=6)
+        self.omnibar.bind('<Return>', self.create)
+        self.omnibar.configure(font=monospace)
 
         #List of members
-        self.memlist=SL(self, height=12, width=57, callback=self._click_list)
-        self.memlist.grid(row=7, column=0, columnspan=7)
+        self.memlist=SL(self, height=25, width=71, callback=self._click_list)
+        self.memlist.grid(row=7, column=0, columnspan=10)
         self.memlist.listbox.configure(font=monospace)
 
-        #Search-label
-        self.searchtext=StringVar()
-        self.search_lbl=Label(self, textvariable=self.searchtext)
-        self.search_lbl.pack()
-        self.search_lbl.grid(row=9, column=0, columnspan=10)
-        self.searchtext.set("  \nEnter values in one of the fields below,\nthen press search to search for people.")
-
-        #Search-fields
-        self.search_name_label=Label(self, text='Name:')
-        self.search_name_label.grid(row=10, column=0)
-        self.search_name=Entry(self)
-        self.search_name.grid(row=10, column=1, columnspan=4)
-        self.search_name.bind('<Return>', self.search)
-        self.search_name.configure(font=monospace)
-
-        self.search_date_label=Label(self, text='Date/Time:')
-        self.search_date_label.grid(row=11, column=0)
-        self.search_date=Entry(self)
-        self.search_date.grid(row=11, column=1, columnspan=4)
-        self.search_date.bind('<Return>', self.search)
-        self.search_date.configure(font=monospace)
-
         #Search-button
-        self.savebtn=Button(self, text='Search', command=self.search)
-        self.savebtn.grid(row=10, column=5)
+        self.searchbtn=Button(self, text='Search', command=self.search, width=11)
+        self.searchbtn.grid(row=3, column=8)
 
         self.searchlist=False
 
-        #Delete-label
-        self.delete_text=StringVar()
-        self.delete_lbl=Label(self, textvariable=self.delete_text)
-        self.delete_lbl.pack()
-        self.delete_lbl.grid(row=12, column=0, columnspan=10)
-        self.delete_text.set("  \nClick a person in the list, or enter an id in the field below,\n then press delete to delete a person.")
-
-        #Delete-fields
-        self.delete_id_label=Label(self, text='Id:')
-        self.delete_id_label.grid(row=13, column=0)
-        self.delete_id=Entry(self)
-        self.delete_id.grid(row=13, column=1, columnspan=4)
-        self.delete_id.bind('<Return>', self.delete)
-        self.delete_id.configure(font=monospace)
-
         #Delete-button
-        self.delete_btn=Button(self, text='Delete', command=self.delete)
-        self.delete_btn.grid(row=13, column=5)
+        self.delete_btn=Button(self, text='Delete', command=self.delete, width=11)
+        self.delete_btn.grid(row=3, column=9)
 
         #Counter
         self.count=StringVar()
         self.countlbl=Label(self, textvariable=self.count)
         self.countlbl.pack()
-        self.countlbl.grid(row=8, column=5, columnspan=2)
+        self.countlbl.grid(row=8, column=0, columnspan=1)
+
+        #Reset list-button
+        self.refreshbtn=Button(self, text='Refresh list', command=self._populate_list, width=11)
+        self.refreshbtn.grid(row=8, column=9)
 
     def create(self, event=None):
         """
@@ -146,8 +113,7 @@ class Main(Frame):
             self._populate_list()
             self.searchlist=False
 
-        name=self.nametxt.get().lower()
-        self.nametxt.delete(0, END)
+        name=self._get_val()
         date=dt.now().strftime("%Y-%m-%d %H:%M")
 
         obj=self.storage.create(**{'name':name, 'date':date, 'lifetime':'n'})
@@ -168,10 +134,15 @@ class Main(Frame):
         :param event: button-event for enter-click.
         """
         self.infotext.set('')
-        name=self.search_name.get().lower()
-        date=self.search_date.get().lower()
-        self.search_name.delete(0, END)
-        self.search_date.delete(0, END)
+        text=self._get_val()
+
+        name=''
+        date=''
+
+        if len(text.split('-')) >= 2 or len (text.split(':')) == 2:
+            date=text
+        else:
+            name=text
 
         args={'name':name, 'date':date}
 
@@ -187,8 +158,7 @@ class Main(Frame):
 
         called when user clicks delete or when user presses enter while cursor is in the delete-field.
         """
-        val=self.delete_id.get()
-        self.delete_id.delete(0, END)
+        val=self._get_val()
 
         if val=='':
             if self.is_clicked:
@@ -209,7 +179,7 @@ class Main(Frame):
             self.infotext.set('FAILURE! {}'.format(obj['error']))
         self._update_count()
 
-    def _list_add(self, id, name, date, lifetime='n'):
+    def _list_add(self, id, name, date):
         """
         adds a person with id, name and timestamp to the list of users in the ui.
 
@@ -217,18 +187,15 @@ class Main(Frame):
         :param name: name of a person.
         :param date: date of a person.
         """
-        life=''
-        if lifetime=='y':
-            life='- X'
-        self.memlist.append(u' {:<4} - {:25} - {} {}'.format(id, name.title(), date, life))
+        self.memlist.append(u' {:<5} - {:40} - {}'.format(id, name.title(), date))
 
-    def _populate_list(self):
+    def _populate_list(self, event=None):
         """
         Refreshes the list of users in the ui.
         """
         self.memlist.clear()
         for k, v in self.storage.storage.iteritems():
-            self._list_add(k, v['name'], v['date'], v['lifetime'])
+            self._list_add(k, v['name'], v['date'])
 
         self._update_count()
 
@@ -239,17 +206,18 @@ class Main(Frame):
         self.count.set('Total:{}'.format(self.storage.size()))
 
     def _click_list(self, linenum):
-        self._clear_all_textbox()
-        line=self.memlist[linenum]
+        line=''
+        try:
+            line=self.memlist[linenum]
+        except(IndexError):
+            return
+        self._get_val()
         vals=line.split('-')
-        self.clicked_id=int(vals[0].strip())
+        if not 'L' in vals[0]:
+            self.clicked_id=int(vals[0].strip())
+        else:
+            self.clicked_id=vals[0].strip()
         self.is_clicked=True
-
-    def _clear_all_textbox(self):
-        self.delete_id.delete(0, END)
-        self.search_name.delete(0, END)
-        self.search_date.delete(0, END)
-        self.nametxt.delete(0, END)
 
     def google_write(self):
         """
@@ -295,7 +263,7 @@ class Main(Frame):
         self.is_clicked=False
         self.clicked_id=-1
 
-        self.storage.update(**{'id':id, 'lifetime':'y'})
+        self.storage.update(**{'id':id, 'life':True})
         self._populate_list()
 
     def unset_lifetime(self):
@@ -307,8 +275,13 @@ class Main(Frame):
         self.is_clicked=False
         self.clicked_id=-1
 
-        self.storage.update(**{'id':id, 'lifetime':'n'})
+        self.storage.update(**{'id':id, 'life':False})
         self._populate_list()
+
+    def _get_val(self):
+        val=self.omnibar.get()
+        self.omnibar.delete(0, END)
+        return val
 
 if __name__=='__main__':
     gui=Main()

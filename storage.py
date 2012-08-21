@@ -121,6 +121,11 @@ class Storage:
         if not kwargs['id'] in self.storage:
             return {'error':'Provided id does not exist'}
 
+        if 'life' in kwargs:
+            if kwargs['life']:
+                return self._set_lifetime(kwargs['id'])
+            else:
+                return self._unset_lifetime(kwargs['id'])
 
         id=kwargs['id']
         del kwargs['id']
@@ -173,16 +178,40 @@ class Storage:
 
         return retval
 
+    def _set_lifetime(self, id):
+        if self.storage[id]['lifetime']=='y':
+            return {'error':'{} with id {} is already set as lifetime member'.format(self.objectname, id)}
 
-    def _unique_id(self):
+        lid=self._unique_id(True)
+        self.storage[lid]=self.storage[id]
+        self.storage[lid]['lifetime']='y'
+        del self.storage[id]
+        return {'success':'{} with id {} now has id {} and is set as lifetime'.format(self.objectname, id, lid)}
+
+    def _unset_lifetime(self, lid):
+        if self.storage[lid]['lifetime']=='n':
+            return {'error':'{} with id {} is not set as lifetime member'.format(self.objectname, lid)}
+
+        id=self._unique_id()
+        self.storage[id]=self.storage[lid]
+        self.storage[id]['lifetime']='n'
+        del self.storage[lid]
+        return {'success':'{} with id {} now has id {} and is no longer set as lifetime'.format(self.objectname, lid, id)}
+
+    def _unique_id(self, life=False):
         """
         Finds the first availible id and returns it.
 
         :returns: the first availible id.
         """
-        size=self.size()
-        if not size in self.storage:
-            return size
+        if life:
+            i=0
+            val='L0'
+            while val in self.storage:
+                i+=1
+                val='L{}'.format(i)
+            return val
+
         i=0
         while i in self.storage:
             i+=1
@@ -216,8 +245,10 @@ class Storage:
         #bugfix for keys..
         tmp=json.loads(js)
         for k, v in tmp.iteritems():
-            self.storage[int(k)]=v
-        #self.storage=json.loads(js)
+            if not 'L' in k:
+                self.storage[int(k)]=v
+            else:
+                self.storage[k]=v
 
     def _get_filename(self, nameonly=False):
         """
