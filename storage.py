@@ -177,6 +177,11 @@ class Storage:
         return retval
 
     def _set_lifetime(self, id):
+        """
+        Set a user as lifetime member.
+
+        Give the user a lifetime ID: Lx where x is number.
+        """
         if self.storage[id]['lifetime']=='y':
             return {'error':'{} with id {} is already set as lifetime member'.format(self.objectname, id)}
 
@@ -187,6 +192,11 @@ class Storage:
         return {'success':'{} with id {} now has id {} and is set as lifetime'.format(self.objectname, id, lid)}
 
     def _unset_lifetime(self, lid):
+        """
+        Unset lifetime flag from a user.
+
+        Give the user a normal id, instead of lifetime id.
+        """
         if self.storage[lid]['lifetime']=='n':
             return {'error':'{} with id {} is not set as lifetime member'.format(self.objectname, lid)}
 
@@ -250,9 +260,24 @@ class Storage:
                 self.storage[k]=v
 
     def _load_lifetime(self, filename):
-        pass
-        #if 'v'
-        
+        m=re.search('(.+)medlemmer_(\S)(\d\d)\.json', filename)
+        path=m.group(1)
+        s=m.group(2)
+        y=m.group(3)
+
+        old_fname=''
+        if s=='h':
+            old_fname='{}medlemmer_{}{}.json'.format(path, 'v', y)
+        elif s=='v':
+            old_fname='{}medlemmer_{}{}.json'.format(path, 'h', (y-1))
+
+        f=open(old_fname, 'r')
+        old_storage=json.loads(f.read())
+
+        for k, v in old_storage.iteritems():
+            if 'L' in k:
+                self.storage[k]=v
+
     def _get_filename(self, nameonly=False):
         """
         Calculates and returns current filename, e.g. 'medlemmer_h12' for autumn 2012.
