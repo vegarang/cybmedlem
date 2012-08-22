@@ -226,7 +226,7 @@ class Storage:
             i+=1
         return i
 
-    def save(self, testfile=False):
+    def save(self):
         """
         Saves entire collection to file. Filename is provided by :func:`_get_filename<storage.Storage._get_filename>`
 
@@ -325,7 +325,7 @@ class Storage:
 
     def _testfile(self):
         try:
-            open(self.filename, 'w')
+            open(self.filename, 'a')
         except(IOError):
             return False
         return True

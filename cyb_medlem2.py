@@ -77,7 +77,7 @@ class Main(Frame):
         self.infotext.set("Welcome")
 
         #Save-button
-        self.savebtn=Button(self, text='    Save    ', command=self.create, width=11)
+        self.savebtn=Button(self, text='Save', command=self.create, width=11)
         self.savebtn.grid(row=3, column=7)
 
         #Omnibar (entry-field for add/search/delete)
