@@ -55,26 +55,26 @@ class Storage:
         if 'name' in kwargs:
             name=kwargs['name'].strip()
             if len(name.split())<2:
-                return {'error':'You have to enter a full name!'}
+                return {u'error':u'You have to enter a full name!'}
 
             if len(name)<5:
-                return {'error':'A name has to be more than 5 letters'}
+                return {u'error':u'A name has to be more than 5 letters'}
 
         if self.uniqueident:
             if 'success' in self.read(**{self.ident:kwargs[self.ident]}):
-                return {'error':'{} with {} {} already exists!'.format(self.objectname, self.ident, kwargs[self.ident])}
+                return {u'error':u'{} with {} {} already exists!'.format(self.objectname, self.ident, kwargs[self.ident])}
 
         args={}
         for f in self.fields:
             if not f in kwargs:
-                return {'error':'missing field {} in arguments!'.format(f)}
+                return {u'error':u'missing field {} in arguments!'.format(f)}
             if kwargs[f]=='':
-                return {'error':'missing value for field: {}!'.format(f)}
+                return {u'error':u'missing value for field: {}!'.format(f)}
             args[f]=unicode(kwargs[f])
 
         key=self._unique_id()
         self.storage[key]=args
-        return {'success':key, 'object':args}
+        return {u'success':key, 'object':args}
 
     def read(self, **kwargs):
         """
@@ -84,11 +84,11 @@ class Storage:
         :returns: a dict with either 'success' containing the object, or 'error' with errormessage.
         """
         if len(self.storage)==0:
-            return {'error':'empty collection'}
+            return {u'error':u'empty collection'}
 
         if 'id' in kwargs:
             if kwargs['id'] in self.storage:
-                return {'success':self.storage[kwargs['id']]}
+                return {u'success':self.storage[kwargs['id']]}
 
         match=0
         if self.ident in kwargs:
@@ -98,10 +98,10 @@ class Storage:
                         retval=v
                         match+=1
         if match>1:
-            return {'error':'multiple {}s matching name'.format(self.objectname)}
+            return {u'error':u'multiple {}s matching name'.format(self.objectname)}
         if match==1:
-            return {'success':retval}
-        return {'error':'no {}s found'.format(self.objectname)}
+            return {u'success':retval}
+        return {u'error':u'no {}s found'.format(self.objectname)}
 
     def update(self, **kwargs):
         """
@@ -112,13 +112,13 @@ class Storage:
         :returns: a dict with either 'success' containing the updated object, or 'error' with errormessage.
         """
         if len(self.storage)==0:
-            return {'error':'empty collection'}
+            return {u'error':u'empty collection'}
 
         if not 'id' in kwargs:
-            return {'error':'No id provided'}
+            return {u'error':u'No id provided'}
 
         if not kwargs['id'] in self.storage:
-            return {'error':'Provided id does not exist'}
+            return {u'error':u'Provided id does not exist'}
 
         if 'life' in kwargs:
             if kwargs['life']:
@@ -134,7 +134,7 @@ class Storage:
             if k in self.fields:
                 obj[k]=v
 
-        return {'success':self.storage[id]}
+        return {u'success':self.storage[id]}
 
 
     def delete(self, **kwargs):
@@ -146,16 +146,16 @@ class Storage:
         """
 
         if len(self.storage)==0:
-            return {'error':'empty collection'}
+            return {u'error':u'empty collection'}
 
         if not 'id' in kwargs:
-            return {'error':'No id provided'}
+            return {u'error':u'No id provided'}
 
         if not kwargs['id'] in self.storage:
-            return {'error':'No {} matching id: {}'.format(self.objectname, kwargs['id'])}
+            return {u'error':u'No {} matching id: {}'.format(self.objectname, kwargs['id'])}
 
         del self.storage[kwargs['id']]
-        return {'success':'{} with id {} is deleted'.format(self.objectname, kwargs['id'])}
+        return {u'success':u'{} with id {} is deleted'.format(self.objectname, kwargs['id'])}
 
 
     def search(self, **kwargs):
@@ -184,13 +184,13 @@ class Storage:
         Give the user a lifetime ID: Lx where x is number.
         """
         if self.storage[id]['lifetime']=='y':
-            return {'error':'{} already has a lifetime membership'.format(self.storage[id]['name'].title())}
+            return {u'error':u'{} already has a lifetime membership'.format(self.storage[id]['name'].title())}
 
         lid=self._unique_id(True)
         self.storage[lid]=self.storage[id]
         self.storage[lid]['lifetime']='y'
         del self.storage[id]
-        return {'success':'{} now has id {} and a lifetime membership'.format(self.storage[lid]['name'].title(), lid)}
+        return {u'success':u'{} now has id {} and a lifetime membership'.format(self.storage[lid]['name'].title(), lid)}
 
     def _unset_lifetime(self, lid):
         """
@@ -199,13 +199,13 @@ class Storage:
         Give the user a normal id, instead of lifetime id.
         """
         if self.storage[lid]['lifetime']=='n':
-            return {'error':'{} does not have a lifetime membership'.format(self.storage[id]['name'].title())}
+            return {u'error':u'{} does not have a lifetime membership'.format(self.storage[id]['name'].title())}
 
         id=self._unique_id()
         self.storage[id]=self.storage[lid]
         self.storage[id]['lifetime']='n'
         del self.storage[lid]
-        return {'success':'{} now has id {}, and have lost the lifetime membership'.format(self.storage[id]['name'].title(), id)}
+        return {u'success':u'{} now has id {}, and have lost the lifetime membership'.format(self.storage[id]['name'].title(), id)}
 
     def _unique_id(self, life=False):
         """
@@ -266,7 +266,7 @@ class Storage:
             else:
                 self.storage[k]=v
 
-        return {'success':'Loaded all data from file'}
+        return {u'success':u'Loaded all data from file'}
 
     def _load_lifetime(self):
         """
@@ -287,7 +287,7 @@ class Storage:
             old_fname='{}medlemmer_{}{}.json'.format(path, 'h', (y-1))
 
         if not os.path.exists(old_fname):
-            return {'error':'Previous file could not be found, no lifetime members loaded.'}
+            return {u'error':u'Previous file could not be found, no lifetime members loaded.'}
 
         f=open(old_fname, 'r')
         old_storage=json.loads(f.read())
@@ -296,7 +296,7 @@ class Storage:
             if 'L' in k and v['lifetime']=='y':
                 self.storage[k]=v
 
-        return {'success':'loaded all lifetime members from previous file'}
+        return {u'success':u'loaded all lifetime members from previous file'}
 
     def _get_filename(self, nameonly=False):
         """
@@ -337,7 +337,7 @@ class Storage:
         Note: lazy backup, does not merge.. overwrites google-data.
         """
         if not self._get_google_sheet():
-            return {'error':'could not connect to google spreadsheet'}
+            return {u'error':u'could not connect to google spreadsheet'}
 
         try:
             val=self.wks.col_values(1)
@@ -354,14 +354,14 @@ class Storage:
             self.wks.update_cell(x, 2, json.dumps(v))
             x+=1
 
-        return {'success':'backed up to google'}
+        return {u'success':u'backed up to google'}
 
     def google_read(self):
         """
         read backup of collection from a google spreadsheet, merge values based on id and date.
         """
         if not self._get_google_sheet():
-            return {'error':'could not connect to google spreadsheet'}
+            return {u'error':u'could not connect to google spreadsheet'}
 
         empty=False
         try:
@@ -371,7 +371,7 @@ class Storage:
             empty=True
 
         if empty:
-            return {'error':'spreadsheet is empty!'}
+            return {u'error':u'spreadsheet is empty!'}
 
         gdoc={}
         for i in xrange(0, len(keys)):
@@ -384,7 +384,7 @@ class Storage:
                 if v['date']>self.storage[k]['date']:
                     self.storage[k]=v
 
-        return {'success':'read and merged all values from google doc.'}
+        return {u'success':u'read and merged all values from google doc.'}
 
 
     def wiki_write(self):

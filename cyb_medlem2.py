@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from storage import Storage
-from Tkinter import Frame, Menu, Button, Entry, Label, StringVar, END
+from Tkinter import Frame, Menu, Button, Entry, Label, StringVar, END, TOP, BOTH, YES, Toplevel, RIDGE, LEFT
 from datetime import datetime as dt
 import tkMessageBox, tkFont, os
 from scrolledlist import ScrolledList as SL
@@ -25,7 +25,7 @@ class Main(Frame):
         self.clicked_id=-1
         Frame.__init__(self, master)
         self.master.title('Medlemsregister Cybernetisk Selskab')
-        self.grid(padx=25, pady=30)
+        self.grid(padx=15, pady=15)
 
         if not self.storage._testfile():
             path=os.path.abspath(__file__).rsplit('/',1)[0]
@@ -66,6 +66,7 @@ class Main(Frame):
 
         menubar.add_cascade(label='Backup', menu=backupmenu)
         menubar.add_cascade(label='Special Actions', menu=specialmenu)
+        menubar.add_command(label='Help', command=self.display_help)
 
         self.master.config(menu=menubar)
 
@@ -115,6 +116,22 @@ class Main(Frame):
         self.saveallbtn=Button(self, text='Save to file', command=self.storage.save, width=11)
         self.saveallbtn.grid(row=8, column=8)
 
+        #Help-button
+        #self.helpbutton=Button(self, text='Help', command=self.display_help, width=11)
+        #self.helpbutton.grid(row=8, column=7)
+
+    def display_help(self):
+        """
+        Display a new window with help-text from file 'help.txt'
+        """
+        help=Toplevel()
+        help.title('Help and usage')
+        f=open('help.txt', 'r')
+        helptext=f.read()
+        f.close
+        helplabel=Label(help, text=helptext, relief=RIDGE, padx=15, pady=15, anchor='w', justify=LEFT, bg='white')
+        helplabel.pack(side=TOP, fill=BOTH, expand=YES)
+
     def create(self, event=None):
         """
         Called when a user clicks the 'save person'-button or presses enter while typing in the name-field.
@@ -131,9 +148,9 @@ class Main(Frame):
 
         obj=self.storage.create(**{'name':name, 'date':date, 'lifetime':'n'})
         if not 'success' in obj:
-            self.infotext.set('FAILURE! {}'.format(obj['error']))
+            self.infotext.set(u'FAILURE! {}'.format(obj['error']))
         else:
-            self.infotext.set('Success! User added with id: {}'.format(obj['success']))
+            self.infotext.set(u'Success! User added with id: {}'.format(obj['success']))
             self._list_add(obj['success'], obj['object']['name'], obj['object']['date'])
 
         self._update_count()
@@ -179,7 +196,7 @@ class Main(Frame):
                 self.is_clicked=False
                 self.clicked_id=-1
             else:
-                self.infotext.set('FAILURE! No id provided. Either click a person in the list or write an id.')
+                self.infotext.set(u'FAILURE! No id provided. Either click a person in the list or write an id.')
                 return
         elif 'L' in val:
             id=val
@@ -188,18 +205,18 @@ class Main(Frame):
 
         obj=self.storage.read(**{'id':id})
         if 'success' in obj:
-            check=self._popup('Really delete?',
-                              "Do you really want to delete '{}'?".format(obj['success']['name'].title()), 'warning')
+            check=self._popup(u'Really delete?',
+                              u"Do you really want to delete '{}'?".format(obj['success']['name'].title()), 'warning')
             if not check:
-                self.infotext.set('Delete aborted..')
+                self.infotext.set(u'Delete aborted..')
                 return
 
         obj=self.storage.delete(**{'id':id})
         if 'success' in obj:
-            self.infotext.set('Success! {}'.format(obj['success']))
+            self.infotext.set(u'Success! {}'.format(obj['success']))
             self._populate_list()
         else:
-            self.infotext.set('FAILURE! {}'.format(obj['error']))
+            self.infotext.set(u'FAILURE! {}'.format(obj['error']))
         self._update_count()
 
     def _list_add(self, id, name, date):
@@ -226,7 +243,7 @@ class Main(Frame):
         """
         Updates the counter in the ui with number from :func:`storage.size()<storage.Storage.size>`
         """
-        self.count.set('Total:{}'.format(self.storage.size()))
+        self.count.set(u'Total:{}'.format(self.storage.size()))
 
     def _click_list(self, linenum):
         """
@@ -253,9 +270,9 @@ class Main(Frame):
         """
         obj=self.storage.google_write()
         if 'success' in obj:
-            self.infotext.set('Success! collection backed up to google spreadsheet.')
+            self.infotext.set(u'Success! collection backed up to google spreadsheet.')
         else:
-            self.infotext.set('Failure! {}'.format(obj['error']))
+            self.infotext.set(u'Failure! {}'.format(obj['error']))
 
     def google_read(self):
         """
@@ -263,23 +280,23 @@ class Main(Frame):
         """
         obj=self.storage.google_read()
         if 'success' in obj:
-            self.infotext.set('Success! {}'.format(obj['success']))
+            self.infotext.set(u'Success! {}'.format(obj['success']))
             self._populate_list()
         else:
-            self.infotext.set('Failure! {}'.format(obj['error']))
+            self.infotext.set(u'Failure! {}'.format(obj['error']))
 
     def wiki_write(self):
         """
         backup collection to the cyb wiki
         """
-        self.infotext.set('Please Wait...')
+        self.infotext.set(u'Please Wait...')
         print 'wiki write'
 
     def wiki_read(self):
         """
         read backup of collection from the cyb wiki
         """
-        self.infotext.set('Please Wait...')
+        self.infotext.set(u'Please Wait...')
         print 'wiki read'
 
     def set_lifetime(self):
@@ -287,7 +304,7 @@ class Main(Frame):
         register lifetime membership for a user. The user is selected by clicking in the list.
         """
         if not self.is_clicked:
-            self.infotext.set('FAILURE! No id provided. You have to click a person in the list!.')
+            self.infotext.set(u'FAILURE! No id provided. You have to click a person in the list!.')
             return
 
         id=self.clicked_id
@@ -296,17 +313,17 @@ class Main(Frame):
 
         obj=self.storage.read(**{'id':id})
         if 'success' in obj:
-            check=self._popup('Set lifetime membership?',
-                              "Do you really want to give '{}' a lifetime membership?".format(obj['success']['name'].title()), 'warning')
+            check=self._popup(u'Set lifetime membership?',
+                              u"Do you really want to give '{}' a lifetime membership?".format(obj['success']['name'].title()), 'warning')
             if not check:
-                self.infotext.set('{} does NOT have a lifetime membership..'.format(obj['success']['name'].title()))
+                self.infotext.set(u'{} does NOT have a lifetime membership..'.format(obj['success']['name'].title()))
                 return
 
         obj=self.storage.update(**{'id':id, 'life':True})
         if 'error' in obj:
-            self.infotext.set('FAILURE! {}'.format(obj['error']))
+            self.infotext.set(u'FAILURE! {}'.format(obj['error']))
         elif 'success' in obj:
-            self.infotext.set('Success! {}'.format(obj['success']))
+            self.infotext.set(u'Success! {}'.format(obj['success']))
             self._populate_list()
 
     def unset_lifetime(self):
@@ -314,7 +331,7 @@ class Main(Frame):
         remove a lifetime membership from a user. The user is selected by clicking in the list.
         """
         if not self.is_clicked:
-            self.infotext.set('FAILURE! No id provided. You have to click a person in the list!.')
+            self.infotext.set(u'FAILURE! No id provided. You have to click a person in the list!.')
             return
 
         id=self.clicked_id
@@ -323,17 +340,17 @@ class Main(Frame):
 
         obj=self.storage.read(**{'id':id})
         if 'success' in obj:
-            check=self._popup('Remove lifetime membership?',
-                              "Do you really want to remove '{}'s' lifetime membership?".format(obj['success']['name'].title()), 'warning')
+            check=self._popup(u'Remove lifetime membership?',
+                              u"Do you really want to remove '{}'s' lifetime membership?".format(obj['success']['name'].title()), 'warning')
             if not check:
-                self.infotext.set('{} is still a lifetime member.'.format(obj['success']['name'].title()))
+                self.infotext.set(u'{} is still a lifetime member.'.format(obj['success']['name'].title()))
                 return
 
         obj=self.storage.update(**{'id':id, 'life':False})
         if 'error' in obj:
-            self.infotext.set('FAILURE! {}'.format(obj['error']))
+            self.infotext.set(u'FAILURE! {}'.format(obj['error']))
         elif 'success' in obj:
-            self.infotext.set('Success! {}'.format(obj['success']))
+            self.infotext.set(u'Success! {}'.format(obj['success']))
             self._populate_list()
 
     def _get_val(self):
@@ -365,4 +382,4 @@ if __name__=='__main__':
         gui.storage.save()
     except IOError:
         path=os.path.abspath(__file__).rsplit('/',1)[0]
-        print '\n\nFolder not found! Create folder "{}/medlemslister" and restart the program\n'.format(path)
+        print u'\n\nFolder not found! Create folder "{}/medlemslister" and restart the program\n'.format(path)
