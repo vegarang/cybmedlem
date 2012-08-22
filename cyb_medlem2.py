@@ -77,8 +77,6 @@ class Main(Frame):
         self.infotext.set("Welcome")
 
         #Save-button
-        #self.savebtntext=Label(self, text='Enter name:')
-        #self.savebtntext.grid(row=3, column=0)
         self.savebtn=Button(self, text='    Save    ', command=self.create, width=11)
         self.savebtn.grid(row=3, column=7)
 
@@ -231,6 +229,11 @@ class Main(Frame):
         self.count.set('Total:{}'.format(self.storage.size()))
 
     def _click_list(self, linenum):
+        """
+        called when a user clicks a member in the list of members. Saves the id of the user.
+
+        :param linenum: the linenumber the user clicked.
+        """
         line=''
         try:
             line=self.memlist[linenum]
@@ -280,6 +283,9 @@ class Main(Frame):
         print 'wiki read'
 
     def set_lifetime(self):
+        """
+        register lifetime membership for a user. The user is selected by clicking in the list.
+        """
         if not self.is_clicked:
             self.infotext.set('FAILURE! No id provided. You have to click a person in the list!.')
             return
@@ -304,6 +310,9 @@ class Main(Frame):
             self._populate_list()
 
     def unset_lifetime(self):
+        """
+        remove a lifetime membership from a user. The user is selected by clicking in the list.
+        """
         if not self.is_clicked:
             self.infotext.set('FAILURE! No id provided. You have to click a person in the list!.')
             return
@@ -328,11 +337,21 @@ class Main(Frame):
             self._populate_list()
 
     def _get_val(self):
+        """
+        clears the input-field and returns value that was there.
+        """
         val=self.omnibar.get()
         self.omnibar.delete(0, END)
         return val
 
     def _popup(self, title, text, style=None):
+        """
+        create a popup!
+
+        :param title: title of the popup-window
+        :param text: the text in the popup-window
+        :param style: the icon-style of the popup. default is 'warning'
+        """
         if style:
             if style=='error':
                 return tkMessageBox.showerror(title, text)

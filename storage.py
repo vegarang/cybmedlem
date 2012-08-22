@@ -10,10 +10,9 @@ class Storage:
     """
     A simple class used to save data, and back it up.
 
-    TODO: add sync to `google`_ and/or our `wiki`_.
+    TODO: add sync to our `wiki`_.
 
     .. _wiki: http://wiki.cyb.no
-    .. _google: http://drive.google.com
     """
     def __init__(self, **kwargs):
         """
@@ -390,14 +389,14 @@ class Storage:
 
     def wiki_write(self):
         """
-        backup collection to the cyb wiki
+        TODO: backup collection to the cyb wiki
         """
         print 'TODO: wiki write'
         pass
 
     def wiki_read(self):
         """
-        read backup of collection from the cyb wiki
+        TODO: read backup of collection from the cyb wiki
         """
         print 'TODO: wiki read'
         pass
