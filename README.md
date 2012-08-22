@@ -36,6 +36,4 @@ notes
 -------
 This system is developed in Ubuntu 12.04 with python 2.7. Not tested in any other os/distro.
 
-The scrolledlist.py file is not my work, found online after some googling.
-
-Sorry about the ugly UI - my first attempt at using Tkinter :-)
+The scrolledlist.py file is not my work, found online at [new mexico tech](http://infohost.nmt.edu/tcc/help/lang/python/examples/scrolledlist/module-scrolledlist.html) after some googleing.
