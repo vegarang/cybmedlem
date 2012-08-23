@@ -63,6 +63,7 @@ class Main(Frame):
         specialmenu=Menu(menubar, tearoff=0)
         specialmenu.add_command(label='Set as lifetime member', command=self.set_lifetime)
         specialmenu.add_command(label='Remove lifetime membership', command=self.unset_lifetime)
+        specialmenu.add_command(label='Change a users id', command=self.update_id)
 
         menubar.add_cascade(label='Backup', menu=backupmenu)
         menubar.add_cascade(label='Special Actions', menu=specialmenu)
@@ -126,7 +127,8 @@ class Main(Frame):
         """
         help=Toplevel()
         help.title('Help and usage')
-        f=open('help.txt', 'r')
+        path=os.path.abspath(__file__).rsplit('/',1)[0]
+        f=open(u'{}/help.txt'.format(path), 'r')
         helptext=f.read()
         f.close
         helplabel=Label(help, text=helptext, relief=RIDGE, padx=15, pady=15, anchor='w', justify=LEFT, bg='white')
@@ -352,6 +354,39 @@ class Main(Frame):
         elif 'success' in obj:
             self.infotext.set(u'Success! {}'.format(obj['success']))
             self._populate_list()
+
+    def update_id(self):
+        """
+        Update the id of a user
+        """
+        if not self.is_clicked:
+            self.infotext.set(u'FAILURE: You have to click a user in the list.')
+            return
+
+        newid=self._get_val()
+        if newid=='':
+            self.infotext.set(u'FAILURE: You have to enter a new id in the textfield.')
+            return
+
+        id=self.clicked_id
+        self.is_clicked=False
+        self.clicked_id=-1
+
+        name=self.storage.read(**{'id':id})
+        if not 'success' in name:
+            self.infotext.set(u'FAILURE: id could not be found..')
+            return
+
+        name=u'{}'.format(name['success']['name'].title())
+        if not self._popup(u'Change id?', u"Do you really want to change the id of '{}'?".format(name)):
+            self.infotext.set(u'Aborted changing id.')
+            return
+
+        retval=self.storage.update_id(id, newid)
+
+        self.infotext.set(retval['status'])
+
+        self._populate_list()
 
     def _get_val(self):
         """

@@ -207,6 +207,24 @@ class Storage:
         del self.storage[lid]
         return {u'success':u'{} now has id {}, and have lost the lifetime membership'.format(self.storage[id]['name'].title(), id)}
 
+    def update_id(self, oldid, newid):
+        """
+        Change/update the id of a person.
+        """
+        tmp=self.storage[oldid]
+        if tmp['lifetime']=='y':
+            if not 'L' in newid:
+                newid='L{}'.format(newid)
+
+        if newid in self.storage:
+            return {'status':'FAILURE: Chosen id is already in use.'}
+
+        self.storage[newid]=tmp
+
+        del self.storage[oldid]
+
+        return {'status':'Success! Updated the users id!'}
+
     def _unique_id(self, life=False):
         """
         Finds the first availible id and returns it.
