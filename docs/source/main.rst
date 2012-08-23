@@ -65,6 +65,10 @@ unset_lifetime
 ---------------------------
 .. autofunction:: cyb_medlem2::Main.unset_lifetime
 
+update_id
+---------------
+.. autofunction:: cyb_medlem2::Main.update_id
+
 _get_val
 ---------------------------
 .. autofunction:: cyb_medlem2::Main._get_val

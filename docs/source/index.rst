@@ -11,6 +11,7 @@ Documentation for CYB Medlemsliste v1.0 rc
 
     storage
     main
+    usage
 
 
 This is the documentation for a small program written to
@@ -26,4 +27,8 @@ Components:
 ---------------
 * :ref:`storage`
 * :ref:`main`
+
+Usage:
+--------
+* :ref:`usage`
 

@@ -1,0 +1,61 @@
+.. _usage:
+
+====================
+Help and Usage
+====================
+
+
+Add person:
+-------------
+Write a full name (must be at least 5 chars, and have at least one space) in the textbox and press <Enter> or the 'save'-button.
+
+Search:
+-------
+Write part of a name, or part of a date/time stamp and click search. The list of users will then be updated to view only search-results.
+Click the 'Refresh list'-button to clear search-results and get the full list of users in the list.
+
+Delete a person:
+-----------------
+Click a person in the list or enter a users id in the textfield and click the 'delete'-button. 
+Click 'yes' in the popup and the person will be deleted from the collection
+
+Give a lifetime membership:
+------------------------------
+Add a person to the system, click him/her in the list, then click 'Give lifetime membership' in the 'Special actions' menu.
+
+Remove a lifetime membership:
+---------------------------------
+Click a lifetime member in the list, then click 'Remove lifetime membership' in the 'Special actions'-menu.
+
+Save collection:
+---------------------------------
+The collection is automatically saved to file when the program exits, but you can also do it by clicking the 'Save to file'-button.
+
+Backup:
+---------------------------------
+The 'backup' menu has 4 options: 
+    
+    - backup to Google:
+    
+      - overwrites collection in google doc with local collection.
+
+
+    - read backup from Google:
+
+      - reads and merges collection from google with local storage.
+
+
+    - backup to Wiki:
+      
+      - TODO!
+
+
+    - read backup from Wiki:
+     
+      -TODO!
+
+
+Change id:
+---------------------------------
+To change the id of a user select the user in the list, type a new id in the textbox, then click 
+'change a users id' in the 'special actions' menu.

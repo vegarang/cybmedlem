@@ -38,6 +38,10 @@ _unset_lifetime
 ----------------
 .. autofunction:: storage::Storage._unset_lifetime
 
+update_id
+----------------
+.. autofunction:: storage::Storage.update_id
+
 _unique_id
 -------------------
 .. autofunction:: storage::Storage._unique_id
