@@ -250,10 +250,14 @@ class Storage:
 
         The collection is stored as JSON.
         """
-        f=open(self.filename, 'w')
-        js=json.dumps(self.storage, indent=3, sort_keys=True)
-        f.write(js)
-        f.close()
+        try:
+            f=open(self.filename, 'w')
+            js=json.dumps(self.storage, indent=3, sort_keys=True)
+            f.write(js)
+            f.close()
+        except:
+            return {'msg':'Could not write to file!', 'status':False}
+        return {'msg':'Storage written to file.', 'status':True}
 
     def load(self):
         """

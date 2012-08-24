@@ -48,6 +48,14 @@ class Main(Frame):
         """
         creates all graphics elements and places them in the graphics grid.
         """
+
+        #global shortcuts
+        self.master.bind('<F1>', self.display_help)
+        self.master.bind('<Control-f>', self.search)
+        self.master.bind('<Control-d>', self.search)
+        self.master.bind('<Control-r>', self._populate_list)
+        self.master.bind('<Control-s>', self.save_to_file)
+
         monospace=tkFont.Font(family='Courier', size=10, weight='normal')
 
         #menubar:
@@ -67,7 +75,7 @@ class Main(Frame):
 
         menubar.add_cascade(label='Backup', menu=backupmenu)
         menubar.add_cascade(label='Special Actions', menu=specialmenu)
-        menubar.add_command(label='Help', command=self.display_help)
+        menubar.add_command(label='Help (F1)', command=self.display_help)
 
         self.master.config(menu=menubar)
 
@@ -79,7 +87,7 @@ class Main(Frame):
         self.infotext.set("Welcome")
 
         #Save-button
-        self.savebtn=Button(self, text='Save', command=self.create, width=11)
+        self.savebtn=Button(self, text='Save (enter)', command=self.create, width=11)
         self.savebtn.grid(row=3, column=7)
 
         #Omnibar (entry-field for add/search/delete)
@@ -94,13 +102,13 @@ class Main(Frame):
         self.memlist.listbox.configure(font=monospace)
 
         #Search-button
-        self.searchbtn=Button(self, text='Search', command=self.search, width=11)
+        self.searchbtn=Button(self, text='Search (ctrl-f)', command=self.search, width=11)
         self.searchbtn.grid(row=3, column=8)
 
         self.searchlist=False
 
         #Delete-button
-        self.delete_btn=Button(self, text='Delete', command=self.delete, width=11)
+        self.delete_btn=Button(self, text='Delete (ctrl-d)', command=self.delete, width=11)
         self.delete_btn.grid(row=3, column=9)
 
         #Counter
@@ -110,18 +118,18 @@ class Main(Frame):
         self.countlbl.grid(row=8, column=0, sticky='W')
 
         #Reset list-button
-        self.refreshbtn=Button(self, text='Refresh list', command=self._populate_list, width=11)
+        self.refreshbtn=Button(self, text='Refresh list (ctrl-r)', command=self._populate_list, width=12)
         self.refreshbtn.grid(row=8, column=9)
 
         #Save to file-button
-        self.saveallbtn=Button(self, text='Save to file', command=self.storage.save, width=11)
+        self.saveallbtn=Button(self, text='Save to file (ctrl-s)', command=self.save_to_file, width=12)
         self.saveallbtn.grid(row=8, column=8)
 
         #Help-button
         #self.helpbutton=Button(self, text='Help', command=self.display_help, width=11)
         #self.helpbutton.grid(row=8, column=7)
 
-    def display_help(self):
+    def display_help(self, event=None):
         """
         Display a new window with help-text from file 'help.txt'
         """
@@ -395,6 +403,11 @@ class Main(Frame):
         val=self.omnibar.get()
         self.omnibar.delete(0, END)
         return val
+
+    def save_to_file(self, event=None):
+        val=self.storage.save()
+
+        self.infotext.set('{}'.format(val['msg']))
 
     def _popup(self, title, text, style=None):
         """
