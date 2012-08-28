@@ -52,7 +52,7 @@ class Main(Frame):
         #global shortcuts
         self.master.bind('<F1>', self.display_help)
         self.master.bind('<Control-f>', self.search)
-        self.master.bind('<Control-d>', self.search)
+        self.master.bind('<Control-d>', self.delete)
         self.master.bind('<Control-r>', self._populate_list)
         self.master.bind('<Control-s>', self.save_to_file)
 
@@ -189,8 +189,16 @@ class Main(Frame):
         obj=self.storage.search(**args)
         self.searchlist=True
         self.memlist.clear()
+        i=0
+        l=0
         for k, v in obj.iteritems():
             self._list_add(k, v['name'], v['date'])
+            if not 'L' in k:
+                i+=1
+            else:
+                l+=1
+
+        self._update_count(u'Life: {} Normal: {}'.format(l, i))
 
     def delete(self, event=None):
         """
@@ -249,11 +257,14 @@ class Main(Frame):
 
         self._update_count()
 
-    def _update_count(self):
+    def _update_count(self, count=None):
         """
         Updates the counter in the ui with number from :func:`storage.size()<storage.Storage.size>`
         """
-        self.count.set(u'Total:{}'.format(self.storage.size()))
+        if count:
+            self.count.set(u'{}'.format(count))
+        else:
+            self.count.set(u'Total: {}'.format(self.storage.size()))
 
     def _click_list(self, linenum):
         """
