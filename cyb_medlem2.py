@@ -179,7 +179,7 @@ class Main(Frame):
         name=''
         date=''
 
-        if len(text.split('-')) >= 2 or len (text.split(':')) == 2:
+        if len(text.split('-')) > 1 or len (text.split(':')) == 2:
             date=text
         else:
             name=text
@@ -193,7 +193,7 @@ class Main(Frame):
         l=0
         for k, v in obj.iteritems():
             self._list_add(k, v['name'], v['date'])
-            if not 'L' in k:
+            if not 'L' in '{}'.format(k):
                 i+=1
             else:
                 l+=1
@@ -413,7 +413,8 @@ class Main(Frame):
         """
         val=self.omnibar.get()
         self.omnibar.delete(0, END)
-        return val
+        val=u'{}'.format(val)
+        return val.lower()
 
     def save_to_file(self, event=None):
         val=self.storage.save()

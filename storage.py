@@ -70,7 +70,8 @@ class Storage:
                 return {u'error':u'missing field {} in arguments!'.format(f)}
             if kwargs[f]=='':
                 return {u'error':u'missing value for field: {}!'.format(f)}
-            args[f]=unicode(kwargs[f])
+            value=u'{}'.format(kwargs[f]).strip().lower()
+            args[f]=value#unicode(kwargs[f])
 
         key=self._unique_id()
         self.storage[key]=args
