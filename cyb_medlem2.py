@@ -18,7 +18,8 @@ class Main(Frame):
         args={'fields':['name', 'date', 'lifetime'],
               'ident':'name',
               'uniqueident':True,
-              'objectname':'person'
+              'objectname':'person',
+              'gui':self
              }
         self.storage=Storage(**args)
         self.is_clicked=False
@@ -65,8 +66,8 @@ class Main(Frame):
         backupmenu.add_command(label='Backup to Google (Note: Slow!)', command=self.google_write)
         backupmenu.add_command(label='Read backup from Google', command=self.google_read)
         backupmenu.add_separator()
-        backupmenu.add_command(label='Backup to Wiki', command=self.wiki_write)
-        backupmenu.add_command(label='Read backup from Wiki', command=self.wiki_read)
+        backupmenu.add_command(label='Merge with Wiki', command=self.wiki_merge)
+        backupmenu.add_command(label='Overwrite Wiki with local storage', command=self.wiki_overwrite)
 
         specialmenu=Menu(menubar, tearoff=0)
         specialmenu.add_command(label='Set as lifetime member', command=self.set_lifetime)
@@ -307,19 +308,23 @@ class Main(Frame):
         else:
             self.infotext.set(u'Failure! {}'.format(obj['error']))
 
-    def wiki_write(self):
+    def wiki_merge(self):
         """
-        backup collection to the cyb wiki
+        Merge local collection with wiki
         """
         self.infotext.set(u'Please Wait...')
-        print 'wiki write'
+        val=self.storage.wiki_merge()
+        val=self.storage.wiki_merge(lifetime=True)
+        self.infotext.set(val['status'])
 
-    def wiki_read(self):
+    def wiki_overwrite(self):
         """
-        read backup of collection from the cyb wiki
+        overwrite wiki with data from local storage
         """
         self.infotext.set(u'Please Wait...')
-        print 'wiki read'
+        val=self.storage.wiki_merge(overwrite_wiki=True, push_to_wiki=True)
+        val=self.storage.wiki_merge(overwrite_wiki=True, push_to_wiki=True, lifetime=True)
+        self.infotext.set(val['status'])
 
     def set_lifetime(self):
         """

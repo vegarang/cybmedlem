@@ -10,6 +10,7 @@ Documentation for CYB Medlemsliste v1.0 rc
     :hidden:
 
     storage
+    wikilink
     main
     usage
 
@@ -27,6 +28,7 @@ Components:
 ---------------
 * :ref:`storage`
 * :ref:`main`
+* :ref:`wikilink`
 
 Usage:
 --------

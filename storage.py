@@ -5,12 +5,13 @@ from datetime import datetime as dt
 import os, sys, json, gspread, re
 from gspread.exceptions import SpreadsheetNotFound
 from account import username, passwd
+from wikilink import WikiLink
 
 class Storage:
     """
     A simple class used to save data, and back it up.
 
-    TODO: add sync to our `wiki`_.
+    TODO: add sync to our `wiki`_. - Update! Almost done!
 
     .. _wiki: http://wiki.cyb.no
     """
@@ -36,8 +37,10 @@ class Storage:
             self.uniqueident=kwargs['uniqueident']
         if 'objectname' in kwargs:
             self.objectname=kwargs['objectname']
-
+        if 'gui' in kwargs:
+            self.gui=kwargs['gui']
         self.wks=None
+        self.wl=None
 
         self.filename=self._get_filename()
 
@@ -409,20 +412,73 @@ class Storage:
 
         return {u'success':u'read and merged all values from google doc.'}
 
+    def wiki_merge(self, push_to_wiki=False, lifetime=False, overwrite_wiki=False):
+        """
+        Merge local collection with table on wiki
+        """
+        pagename=None
+        if not lifetime:
+            pagename=self._get_filename(nameonly=True)
+        else:
+            pagename='livstidsmedlemmer_fra_script'
+        self.wl=WikiLink(pagename=pagename)
+        ok, msg=self.wl.login()
+        if not ok:
+            return{u'status':u'Failure while accessing wiki. error: {}'.format(msg)}
 
-    def wiki_write(self):
-        """
-        TODO: backup collection to the cyb wiki
-        """
-        print 'TODO: wiki write'
-        pass
+        val={}
+        if overwrite_wiki:
+            self.wl.clear_page()
+            val['pre']='== Medlemsliste ==\n'
+            val['post']=''
+        else:
+            ok, val=self._merge()
+            if not ok:
+                return val
 
-    def wiki_read(self):
-        """
-        TODO: read backup of collection from the cyb wiki
-        """
-        print 'TODO: wiki read'
-        pass
+        if push_to_wiki:
+            ok, table=self.wl.dict_to_table(self.storage, ['id', 'name', 'date', 'lifetime'], lifetime=lifetime)
+            if not ok:
+                return {u'status':table}
+            text=u'{}{}{}'.format(val['pre'], table, val['post'])
+            if overwrite_wiki:
+                summary='Overwritten from script'
+            else:
+                summary='Merge from script'
+
+            self.wl.write(text=text, summary=summary)
+
+            return {u'status':u'Merged local storage with wiki and updated changes on wiki'}
+        return {u'status':u'wiki merged with local storage'}
+
+    def _merge(self):
+        ok, msg=self.wl.read()
+        if not ok:
+            return{u'status':u'Failure while accessing wiki. error: {}'.format(msg)}
+
+        wiki=self.wl.wikitable_to_dict()
+        ok, values=wiki['dict']
+        if not ok:
+            return false, {u'status':values}
+
+        tmp=self.storage
+
+        for wk, wv in values.iteritems():
+            if wk in tmp:
+                sv=tmp[wk]
+                if wv['name'].strip()!=sv['name'].strip():
+                    return {u'status':u'Failure while merging. Conflict! {} in wiki and {} in local storage have the same id! Please inform sys-admin.'.format(wv['name'], sv['name'])}
+            else:
+                match=False
+                for sk, sv in tmp.iteritems():
+                    if v['name']==sv['name']:
+                        match=True
+                if match:
+                    return {u'status':u'Failure while merging. Conflict! {} is in wiki and local storage with different ids! Please inform sys-admin.'.format(v['name'])}
+                tmp[k]=v
+
+        self.storage=tmp
+        return True, values
 
     def _get_google_sheet(self):
         """
