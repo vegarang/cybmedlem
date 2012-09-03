@@ -244,9 +244,10 @@ class Main(Frame):
         Refreshes the list of users in the ui.
         """
         self.memlist.clear()
-        for k, v in self.storage.storage.iteritems():
+        sorted_keys=sorted(self.storage.storage.iterkeys())
+        for k in sorted_keys:
+            v=self.storage.storage[k]
             self._list_add(k, v['name'], v['date'])
-
         self._update_count()
 
     def _update_count(self):
