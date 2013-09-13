@@ -1,3 +1,6 @@
+**DEPRECATED Look at [medlemssystem_django](https://github.com/vegarang/medlemssystem_django) for the replacement - a Django-based system with a proper database and web-ui based on twitters bootstrap!**
+
+
 cybmedlem
 =========
 
